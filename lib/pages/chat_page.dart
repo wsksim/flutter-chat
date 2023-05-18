@@ -195,22 +195,34 @@ class _ChatBubble extends StatelessWidget {
         CircleAvatar(
           child: profile == null
               ? preloader
-              : Text(profile!.username.substring(0, 2)),
+              : const Icon(
+                  Icons.person,
+                  color: Colors.white,
+          )
         ),
       const SizedBox(width: 12),
       Flexible(
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            vertical: 8,
-            horizontal: 12,
-          ),
-          decoration: BoxDecoration(
-            color: message.isMine
-                ? Theme.of(context).primaryColor
-                : Colors.grey[300],
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(message.content),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(
+                vertical: 8,
+                horizontal: 12,
+              ),
+              decoration: BoxDecoration(
+                color: message.isMine
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey[300],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(message.content),
+            ),
+            Text(
+              message.isMine ? 'You' : profile?.username ?? 'Unknown',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
         ),
       ),
       const SizedBox(width: 12),
