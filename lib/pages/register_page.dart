@@ -25,8 +25,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
 
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   Future<void> _signUp() async {
     final isValid = _formKey.currentState!.validate();
@@ -34,11 +35,16 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
     final email = _emailController.text;
-    final password = _passwordController.text;
     final username = _usernameController.text;
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+    if (password != confirmPassword) {
+      context.showErrorSnackBar(message: 'Passwords do not match');
+      return;
+    }
     try {
       await supabase.auth.signUp(
-          email: email, password: password, data: {'username': username});
+          email: email, password: confirmPassword, data: {'username': username});
       if (!mounted) return;
       Navigator.of(context)
           .pushAndRemoveUntil(ChatPage.route(), (route) => false);
@@ -75,6 +81,23 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             formSpacer,
             TextFormField(
+              controller: _usernameController,
+              decoration: const InputDecoration(
+                label: Text('Username'),
+              ),
+              validator: (val) {
+                if (val == null || val.isEmpty) {
+                  return 'Required';
+                }
+                final isValid = RegExp(r'^[A-Za-z0-9_]{3,24}$').hasMatch(val);
+                if (!isValid) {
+                  return '3-24 long with alphanumeric or underscore';
+                }
+                return null;
+              },
+            ),
+            formSpacer,
+            TextFormField(
               controller: _passwordController,
               obscureText: true,
               decoration: const InputDecoration(
@@ -92,17 +115,20 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             formSpacer,
             TextFormField(
-              controller: _usernameController,
+              controller: _confirmPasswordController,
+              obscureText: true,
               decoration: const InputDecoration(
-                label: Text('Username'),
+                label: Text('Repeat Password'),
               ),
               validator: (val) {
                 if (val == null || val.isEmpty) {
                   return 'Required';
                 }
-                final isValid = RegExp(r'^[A-Za-z0-9_]{3,24}$').hasMatch(val);
-                if (!isValid) {
-                  return '3-24 long with alphanumeric or underscore';
+                if (val.length < 6) {
+                  return '6 characters minimum';
+                }
+                if (val != _passwordController.text) {
+                  return 'Passwords do not match';
                 }
                 return null;
               },
