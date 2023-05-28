@@ -36,6 +36,7 @@ class Message {
     required this.content,
     required this.createdAt,
     required this.isMine,
+    this.isDeleted = false,
   });
 
   /// ID of the message (UUID)
@@ -53,6 +54,9 @@ class Message {
   /// Boolean that indicates if the message was sent by the current user
   final bool isMine;
 
+  /// Whether the message is deleted or not.
+  final bool isDeleted;
+
   /// Creates a message from a map
   ///
   /// [map]      is the map that contains the message data.
@@ -64,5 +68,6 @@ class Message {
         profileId = map['profile_id'],
         content = map['content'],
         createdAt = DateTime.parse(map['created_at']),
-        isMine = myUserId == map['profile_id'];
+        isMine = myUserId == map['profile_id'],
+        isDeleted = map['is_deleted'] ?? false;
 }

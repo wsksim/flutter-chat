@@ -177,8 +177,7 @@ class _MessageBarState extends State<_MessageBar> {
     }
   }
 }
-
-class _ChatBubble extends StatelessWidget {
+class _ChatBubble extends StatefulWidget {
   const _ChatBubble({
     Key? key,
     required this.message,
@@ -189,11 +188,36 @@ class _ChatBubble extends StatelessWidget {
   final Profile? profile;
 
   @override
+  State<_ChatBubble> createState() => _ChatBubbleState();
+}
+
+class _ChatBubbleState extends State<_ChatBubble> {
+
+  /// add option to delete message
+  /// change is_deleted in supabase to true
+  void _deleteMessage() async {
+    if (widget.message.isMine && !widget.message.isDeleted) {
+      try {
+        await supabase.from('messages').update({
+          'is_deleted': true,
+        }).eq('id', widget.message.id);
+      } on PostgrestException catch (error) {
+        context.showErrorSnackBar(message: error.message);
+      } catch (_) {
+        context.showErrorSnackBar(message: unexpectedErrorMessage);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (widget.message.isDeleted) {
+      return const SizedBox();
+    }
     List<Widget> chatContents = [
-      if (!message.isMine)
+      if (!widget.message.isMine)
         CircleAvatar(
-          child: profile == null
+          child: widget.profile == null
               ? preloader
               : const Icon(
                   Icons.person,
@@ -205,38 +229,67 @@ class _ChatBubble extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                vertical: 8,
-                horizontal: 12,
+            GestureDetector(
+              onLongPress: (){
+                if (widget.message.isMine) {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text('Delete Message'),
+                        content: const Text('Are you sure you want to delete this message?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              _deleteMessage();
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: widget.message.isMine
+                      ? Theme.of(context).primaryColor
+                      : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(widget.message.content),
               ),
-              decoration: BoxDecoration(
-                color: message.isMine
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey[300],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(message.content),
             ),
             Text(
-              message.isMine ? 'You' : profile?.username ?? 'Unknown',
+              widget.message.isMine ? 'You' : widget.profile?.username ?? 'Unknown',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ),
       ),
       const SizedBox(width: 12),
-      Text(format(message.createdAt, locale: 'en_short')),
+      Text(format(widget.message.createdAt, locale: 'en_short')),
       const SizedBox(width: 60),
     ];
-    if (message.isMine) {
+    if (widget.message.isMine) {
       chatContents = chatContents.reversed.toList();
     }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 18),
       child: Row(
         mainAxisAlignment:
-            message.isMine ? MainAxisAlignment.end : MainAxisAlignment.start,
+        widget.message.isMine ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: chatContents,
       ),
     );
