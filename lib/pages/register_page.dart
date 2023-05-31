@@ -4,7 +4,23 @@ import 'package:chatgram/pages/login_page.dart';
 import 'package:chatgram/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Register page
+///
+/// This page allows the user to register to the app.
+///
+/// Examples:
+/// ```dart
+/// Navigator.of(context).push(RegisterPage.route());
+/// ```
+///
+/// ```dart
+/// Navigator.of(context).pushAndRemoveUntil(RegisterPage.route(), (route) => false);
+/// ```
+///
 class RegisterPage extends StatefulWidget {
+  /// Creates a register page
+
+  /// Creates a route for this page
   const RegisterPage({Key? key, required this.isRegistering}) : super(key: key);
 
   static Route<void> route({bool isRegistering = false}) {
@@ -15,20 +31,32 @@ class RegisterPage extends StatefulWidget {
 
   final bool isRegistering;
 
+  /// Creates a route for this page with a transition
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
+/// State of the register page
+///
+/// This state allows the user to register to the app.
+///
 class _RegisterPageState extends State<RegisterPage> {
+  /// Creates a state of the register page
   final bool _isLoading = false;
 
+  /// Form key for validation
   final _formKey = GlobalKey<FormState>();
 
+  /// Email controller
   final _emailController = TextEditingController();
+  /// Username controller
   final _usernameController = TextEditingController();
+  /// Password controller
   final _passwordController = TextEditingController();
+  /// Confirm password controller
   final _confirmPasswordController = TextEditingController();
 
+  /// Creates a route for this page with a transition
   Future<void> _signUp() async {
     final isValid = _formKey.currentState!.validate();
     if (!isValid) {
@@ -54,7 +82,7 @@ class _RegisterPageState extends State<RegisterPage> {
       context.showErrorSnackBar(message: unexpectedErrorMessage);
     }
   }
-
+  /// Creates a route for this page with a transition
   @override
   Widget build(BuildContext context) {
     return Scaffold(

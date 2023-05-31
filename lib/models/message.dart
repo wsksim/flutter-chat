@@ -10,6 +10,7 @@
 ///   content: 'Hello World!',
 ///   createdAt: DateTime.now(),
 ///   isMine: true,
+///   isDeleted: false,
 /// );
 /// ```
 ///
@@ -30,6 +31,7 @@ class Message {
   /// [content]   is the content of the message.
   /// [createdAt] is the date and time when the message was created.
   /// [isMine]    is a boolean that indicates if the message was sent by the current user.
+  /// [isDeleted] is a boolean that indicates if the message is deleted or not.
   Message({
     required this.id,
     required this.profileId,

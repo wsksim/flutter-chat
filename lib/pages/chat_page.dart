@@ -8,26 +8,56 @@ import 'package:chatgram/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart';
 
-/// Page to chat with someone.
+/// Chat page to display messages
 ///
-/// Displays chat bubbles as a ListView and TextField to enter new chat.
+/// This page is the main page of the app. It displays the messages in a list
+/// and allows the user to send new messages.
+///
+/// Examples:
+/// ```dart
+/// Navigator.of(context).push(ChatPage.route());
+/// ```
+///
+/// ```dart
+/// Navigator.of(context).pushAndRemoveUntil(ChatPage.route(), (route) => false);
+/// ```
+///
 class ChatPage extends StatefulWidget {
+  /// Creates a chat page
   const ChatPage({Key? key}) : super(key: key);
 
+  /// Creates a route for the chat page
+  ///
+  /// This is used to navigate to the chat page.
   static Route<void> route() {
     return MaterialPageRoute(
       builder: (context) => const ChatPage(),
     );
   }
 
+  /// Creates the mutable state for this widget
   @override
   State<ChatPage> createState() => _ChatPageState();
 }
 
+/// Creates the mutable state for this widget
+///
+/// This is where the messages are loaded from Supabase and displayed in a list.
+///
+/// The messages are loaded from Supabase using a stream. This means that the
+/// messages will be updated in real time.
+///
+/// The messages are displayed in a [ListView] with a [StreamBuilder]. The
+/// [StreamBuilder] will listen to the stream and rebuild the [ListView] when
+/// new messages are received.
+///
 class _ChatPageState extends State<ChatPage> {
+  /// The stream of messages
   late final Stream<List<Message>> _messagesStream;
+  /// Cache of profiles
   final Map<String, Profile> _profileCache = {};
 
+  /// The controller for the message text field
   @override
   void initState() {
     final myUserId = supabase.auth.currentUser!.id;
@@ -41,6 +71,7 @@ class _ChatPageState extends State<ChatPage> {
     super.initState();
   }
 
+  /// Loads the profile from Supabase and caches it
   Future<void> _loadProfileCache(String profileId) async {
     if (_profileCache[profileId] != null) {
       return;
@@ -53,6 +84,7 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
+  /// Creates the mutable state for this widget
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,18 +132,42 @@ class _ChatPageState extends State<ChatPage> {
 }
 
 /// Set of widget that contains TextField and Button to submit message
+///
+/// This widget is used to display the text field and button to submit a new
+/// message.
+///
+/// The text field is a [TextFormField] with a [TextEditingController]. The
+/// controller is used to get the text from the text field.
+///
+/// The button is a [TextButton] that calls [_submitMessage] when pressed.
+///
+/// Examples:
+/// ```dart
+/// const _MessageBar();
+/// ```
+///
 class _MessageBar extends StatefulWidget {
+  /// Creates a message bar
   const _MessageBar({
     Key? key,
   }) : super(key: key);
 
+  /// Creates the mutable state for this widget
   @override
   State<_MessageBar> createState() => _MessageBarState();
 }
 
+/// Creates the mutable state for this widget
+///
+/// This is where the message is submitted to Supabase.
+///
+/// The message is submitted to Supabase when the send button is pressed.
+///
 class _MessageBarState extends State<_MessageBar> {
+  /// The controller for the message text field
   late final TextEditingController _textController;
 
+  /// Submits the message
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -146,18 +202,23 @@ class _MessageBarState extends State<_MessageBar> {
     );
   }
 
+  /// Creates the mutable state for this widget
   @override
   void initState() {
     _textController = TextEditingController();
     super.initState();
   }
 
+  /// Disposes the controller
   @override
   void dispose() {
     _textController.dispose();
     super.dispose();
   }
 
+  /// Submits the message
+  ///
+  /// This method submits the message to Supabase.
   void _submitMessage() async {
     final text = _textController.text;
     final myUserId = supabase.auth.currentUser!.id;
@@ -177,24 +238,38 @@ class _MessageBarState extends State<_MessageBar> {
     }
   }
 }
+
+/// A widget that displays a message
+///
+/// This widget is used to display a message in the chat.
 class _ChatBubble extends StatefulWidget {
+  /// Creates a chat bubble
+  ///
+  /// [message] is the message to display
+  /// [profile] is the profile of the message sender
   const _ChatBubble({
     Key? key,
     required this.message,
     required this.profile,
   }) : super(key: key);
 
+  /// The message to display
   final Message message;
+
+  /// The profile of the message sender
   final Profile? profile;
 
+  /// Creates the mutable state for this widget
   @override
   State<_ChatBubble> createState() => _ChatBubbleState();
 }
 
+/// Creates the mutable state for this widget
+///
+/// This is where the messages are loaded from Supabase and displayed in a list.
+///
 class _ChatBubbleState extends State<_ChatBubble> {
-
-  /// add option to delete message
-  /// change is_deleted in supabase to true
+  /// Deletes the message
   void _deleteMessage() async {
     if (widget.message.isMine && !widget.message.isDeleted) {
       try {
@@ -208,7 +283,7 @@ class _ChatBubbleState extends State<_ChatBubble> {
       }
     }
   }
-
+  /// Creates the mutable state for this widget
   @override
   Widget build(BuildContext context) {
     if (widget.message.isDeleted) {
@@ -224,6 +299,7 @@ class _ChatBubbleState extends State<_ChatBubble> {
                   color: Colors.white,
           )
         ),
+      /// add option to delete message
       const SizedBox(width: 12),
       Flexible(
         child: Column(
