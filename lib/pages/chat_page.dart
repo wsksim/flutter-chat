@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:chatgram/models/message.dart';
 import 'package:chatgram/models/profile.dart';
+import 'package:chatgram/pages/login_page.dart';
 import 'package:chatgram/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart';
@@ -54,6 +55,7 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   /// The stream of messages
   late final Stream<List<Message>> _messagesStream;
+
   /// Cache of profiles
   final Map<String, Profile> _profileCache = {};
 
@@ -88,7 +90,21 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Chat')),
+      appBar: AppBar(
+          title: const Text('Chat'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'Logout',
+              onPressed: () async {
+                await supabase.auth.signOut();
+                if (!mounted) return;
+                Navigator.of(context)
+                    .pushAndRemoveUntil(LoginPage.route(), (route) => false);
+              },
+            ),
+          ],
+      ),
       body: StreamBuilder<List<Message>>(
         stream: _messagesStream,
         builder: (context, snapshot) {
@@ -183,6 +199,7 @@ class _MessageBarState extends State<_MessageBar> {
                   maxLines: null,
                   autofocus: true,
                   controller: _textController,
+                  onFieldSubmitted: (_) => _submitMessage(),
                   decoration: const InputDecoration(
                     hintText: 'Type a message',
                     border: InputBorder.none,
@@ -283,6 +300,35 @@ class _ChatBubbleState extends State<_ChatBubble> {
       }
     }
   }
+
+  void _deleteAsk(BuildContext context) {
+    if (widget.message.isMine) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Delete Message'),
+            content:
+                const Text('Are you sure you want to delete this message?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  _deleteMessage();
+                  Navigator.pop(context);
+                },
+                child: const Text('Delete'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
   /// Creates the mutable state for this widget
   @override
   Widget build(BuildContext context) {
@@ -292,13 +338,13 @@ class _ChatBubbleState extends State<_ChatBubble> {
     List<Widget> chatContents = [
       if (!widget.message.isMine)
         CircleAvatar(
-          child: widget.profile == null
-              ? preloader
-              : const Icon(
-                  Icons.person,
-                  color: Colors.white,
-          )
-        ),
+            child: widget.profile == null
+                ? preloader
+                : const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                  )),
+
       /// add option to delete message
       const SizedBox(width: 12),
       Flexible(
@@ -306,32 +352,8 @@ class _ChatBubbleState extends State<_ChatBubble> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             GestureDetector(
-              onLongPress: (){
-                if (widget.message.isMine) {
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: const Text('Delete Message'),
-                        content: const Text('Are you sure you want to delete this message?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              _deleteMessage();
-                              Navigator.pop(context);
-                            },
-                            child: const Text('Delete'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                }
-              },
+              onLongPress: () => _deleteAsk(context),
+              onSecondaryTap: () => _deleteAsk(context),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   vertical: 8,
@@ -347,7 +369,9 @@ class _ChatBubbleState extends State<_ChatBubble> {
               ),
             ),
             Text(
-              widget.message.isMine ? 'You' : widget.profile?.username ?? 'Unknown',
+              widget.message.isMine
+                  ? 'You'
+                  : widget.profile?.username ?? 'Unknown',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -364,8 +388,9 @@ class _ChatBubbleState extends State<_ChatBubble> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 18),
       child: Row(
-        mainAxisAlignment:
-        widget.message.isMine ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: widget.message.isMine
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: chatContents,
       ),
     );
